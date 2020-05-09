@@ -1,51 +1,65 @@
 
-import DOM from './dom';
 import Contract from './contract';
 import './flightsurety.css';
+import axios from "axios";
 
+(async () => {
+  fetchFlightsAndTimes();
 
-(async() => {
-
-    let result = null;
-
-    let contract = new Contract('localhost', () => {
-
-        // Read transaction
-        contract.isOperational((error, result) => {
-            console.log(error,result);
-            display('Operational Status', 'Check if contract is operational', [ { label: 'Operational Status', error: error, value: result} ]);
-        });
-    
-
-        // User-submitted transaction
-        DOM.elid('submit-oracle').addEventListener('click', () => {
-            let flight = DOM.elid('flight-number').value;
-            // Write transaction
-            contract.fetchFlightStatus(flight, (error, result) => {
-                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
-            });
-        })
-    
+  let contract = new Contract('localhost', () => {
+    // Read transaction
+    contract.isOperational((error, result) => {
+      console.log('isOperational:')
+      console.log(error)
+      console.log(result)
+      $('#is-operational').text(result ? "Yes" : "No");
     });
-    
 
+    // User-submitted transaction
+    $('#submit-oracle').click(() => {
+      // Write transaction
+      let flight = $('#flights-dropdown').val();
+      let time = $('#times-dropdown').val();
+      contract.fetchFlightStatus(flight, time, (error, result) => {
+        console.log('fetchFlightStatus:')
+        console.log(error)
+        console.log(result)
+      });
+    })
+  });
 })();
 
+/********************************************************************************************/
+/*                                     DOM MANIPULATION                                     */
+/********************************************************************************************/
 
-function display(title, description, results) {
-    let displayDiv = DOM.elid("display-wrapper");
-    let section = DOM.section();
-    section.appendChild(DOM.h2(title));
-    section.appendChild(DOM.h5(description));
-    results.map((result) => {
-        let row = section.appendChild(DOM.div({className:'row'}));
-        row.appendChild(DOM.div({className: 'col-sm-4 field'}, result.label));
-        row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : String(result.value)));
-        section.appendChild(row);
+let flightTimesResponse;
+
+function fetchFlightsAndTimes() {
+  axios.get('/api/flights').then((result) => {
+    flightTimesResponse = result.data;
+    flightTimesResponse.forEach((element) => {
+      flightsDropdown.append($('<option></option>').attr('value', element.flight).text(element.flight));
     })
-    displayDiv.append(section);
-
+  })
 }
+
+let flightsDropdown = $('#flights-dropdown');
+flightsDropdown.empty();
+flightsDropdown.append('<option selected="true" disabled>Select a flight</option>');
+flightsDropdown.prop('selectedIndex', 0);
+
+let timesDropdown = $('#times-dropdown');
+timesDropdown.append('<option selected="true" disabled>Select a time</option>');
+timesDropdown.prop('selectedIndex', 0);
+
+$('#flights-dropdown').change(function(){
+  timesDropdown.empty();
+  let times = flightTimesResponse.find(flightTimes => flightTimes.flight === $(this).val()).times;
+  times.forEach((element) => {
+    timesDropdown.append($('<option></option>').attr('value', element).text(new Date(element * 1000))); 
+  });
+});
 
 
 
