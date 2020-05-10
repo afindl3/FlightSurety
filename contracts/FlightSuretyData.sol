@@ -11,15 +11,14 @@ contract FlightSuretyData {
 
   address private contractOwner;         // Account used to deploy contract
   bool private operational = true;       // Blocks all state changes throughout the contract if false
-  
-  uint256 private numberOfRegisteredAirlines = 0; //AF
+  uint256 private numberOfRegisteredAirlines = 0; 
   
   struct Airline {
     bool isRegistered;
     bool isFunded;
     uint256 amountPaid;
   }
-  mapping(address => Airline) private airlines; // AF
+  mapping(address => Airline) private airlines;
 
   struct FlightInsurance {
     address[] insurees;
@@ -27,9 +26,9 @@ contract FlightSuretyData {
     mapping(address => uint256) amountCredited;
     bool hasBeenPaidOut;
   }
-  mapping(bytes32 => FlightInsurance) private flightInsurees; // AF
+  mapping(bytes32 => FlightInsurance) private flightInsurees;
 
-  mapping(address => bool) private authorizedContracts; // AF
+  mapping(address => bool) private authorizedContracts;
 
   /********************************************************************************************/
   /*                                       EVENT DEFINITIONS                                  */
@@ -71,7 +70,6 @@ contract FlightSuretyData {
       _;
     }
 
-    // AF:
     modifier isCallerAuthorized() {
       require(authorizedContracts[msg.sender] == true, "Caller is not authorized");
       _;
@@ -97,7 +95,6 @@ contract FlightSuretyData {
       operational = mode;
     }
 
-    // AF:
     function authorizeContract(address contractAddress) external requireContractOwner {
       authorizedContracts[contractAddress] = true;
     }
@@ -113,7 +110,7 @@ contract FlightSuretyData {
   * @dev Add an airline to the registration queue
   *      Can only be called from FlightSuretyApp contract
   */   
-  function registerAirline(address airline) public {
+  function registerAirline(address airline) requireIsOperational public {
     numberOfRegisteredAirlines.add(1);
     airlines[airline] = Airline({
       isRegistered: true,
@@ -128,7 +125,7 @@ contract FlightSuretyData {
     return numberOfRegisteredAirlines;
   }
 
-  function payAirlineRegistrationFee(address airline, uint256 amountPaid) public {
+  function payAirlineRegistrationFee(address airline, uint256 amountPaid) requireIsOperational public {
     airlines[airline].isFunded = true;
     airlines[airline].amountPaid = amountPaid;
   }
@@ -139,7 +136,7 @@ contract FlightSuretyData {
   /**
   * @dev Buy insurance for a flight
   */
-  function buy(address airline, string flight, uint256 timestamp, address passenger) external payable {
+  function buy(address airline, string flight, uint256 timestamp, address passenger) requireIsOperational external payable {
     bytes32 flightKey = getFlightKey(airline, flight, timestamp);
     flightInsurees[flightKey].insurees.push(passenger);
     flightInsurees[flightKey].amountPaid[passenger] = msg.value;
@@ -148,7 +145,7 @@ contract FlightSuretyData {
   /**
   * @dev Credits payouts to insurees
   */
-  function creditInsurees(address airline, string flight, uint256 timestamp, uint256[2] liability) external {
+  function creditInsurees(address airline, string flight, uint256 timestamp, uint256[2] liability) requireIsOperational external {
     bytes32 flightKey = getFlightKey(airline, flight, timestamp);
     require(!flightInsurees[flightKey].hasBeenPaidOut,
       "Passengers accounts' have already been credited for this flight delay");
@@ -164,7 +161,7 @@ contract FlightSuretyData {
   /**
   * @dev Transfers eligible payout funds to insuree
   */
-  function pay(address airline, string flight, uint256 timestamp) external {
+  function pay(address airline, string flight, uint256 timestamp) requireIsOperational external {
     // Checks
     require(msg.sender == tx.origin,
       "Contracts not allowed");

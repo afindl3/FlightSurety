@@ -59,7 +59,6 @@ contract('Oracles', async (accounts) => {
         }
         catch(e) {
           // Enable this when debugging
-          // console.log(e)
           console.log('          Failure! Oracle', a, 'index', idx, '=', oracleIndexes[idx].toNumber(),
             'did not match the request index for:', airline, flight, timestamp);
         }

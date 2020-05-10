@@ -21,23 +21,29 @@
 
   <main class="container">
 
-    <div class="row top-20">
-      <label>Is contract opertaional:</label><span id="is-operational"></span>
-    </div>
+    <label>Is contract operational:</label><span id="is-operational"></span>
 
-    <div class="row top-20">
-      <label>Select a flight and time to fetch the status:</label>
-    </div>
+    <h3 class="top-40">Buy flight insurance:</h3>
+    <p>You can purchase up to 1 ether worth of flight insurance. In the event that your flight is delayed, you may collect a payout of 1.5X your payment.
+      Once you have bought insurance for a specific flight, you may not increase or decrease the amount of insurance, or receive a refund for the purchase.
+      You may purchase insurance for multiple flights.</p>
+    <select id="flights-purchase"></select>
+    <select id="times-purchase"></select>
+    <input id="payment" type="number" placeholder="Ether" value="payment"></input>
+    <btn class="btn btn-primary" id="submit-purchase">Purchase</btn>
 
-    <div class="row top-10">
-      <div>
-        <select id="flights-dropdown">
-        </select>
-        <select id="times-dropdown">
-        </select>
-        <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
-      </div>
-    </div>
+    <h3 class="top-40">Requst flight status check:</h3>
+    <select id="flights-status"></select>
+    <select id="times-status"></select>
+    <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+    <label id="loading">Waiting for oracles to respond...</label>
+    <label id="oracle-response">Validated flight status:</label><span id="status"></span>
+
+    <h3 class="top-40">Collect payout:</h3>
+    <p>Enter the information of the flight that has been delayed (you can check status above) and you will be refunded 1.5X your original payment.</p>
+    <select id="flights-payout"></select>
+    <select id="times-payout"></select>
+    <btn class="btn btn-primary" id="submit-payout">Collect payout</btn>
   </main>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>

@@ -3,29 +3,48 @@ import Contract from './contract';
 import './flightsurety.css';
 import axios from "axios";
 
+let flightTimesResponse;
+
 (async () => {
-  fetchFlightsAndTimes();
+  axios.get('/api/flights').then((result) => {
+    flightTimesResponse = result.data;
+    console.log(flightTimesResponse);
+    flightTimesResponse.forEach((element) => {
+      populateFlights(element);
+    });
+  });
 
   let contract = new Contract('localhost', () => {
-    // Read transaction
-    contract.isOperational((error, result) => {
-      console.log('isOperational:')
-      console.log(error)
-      console.log(result)
-      $('#is-operational').text(result ? "Yes" : "No");
+    contract.isOperational();
+
+    contract.payAirlineRegistrationFee();
+
+    flightTimesResponse.forEach((flightTimes) => {
+      flightTimes.times.forEach((time) => {
+        contract.registerFlight(flightTimes.flight, time);
+      });
     });
 
-    // User-submitted transaction
     $('#submit-oracle').click(() => {
-      // Write transaction
-      let flight = $('#flights-dropdown').val();
-      let time = $('#times-dropdown').val();
-      contract.fetchFlightStatus(flight, time, (error, result) => {
-        console.log('fetchFlightStatus:')
-        console.log(error)
-        console.log(result)
-      });
-    })
+      let flight = $('#flights-status').val();
+      let time = $('#times-status').val();
+      $('#loading').show();
+      contract.fetchFlightStatus(flight, time);
+    });
+
+    $('#submit-purchase').click(() => {
+      let flight = $('#flights-purchase').val();
+      let time = $('#times-purchase').val();
+      let payment = $('#payment').val();
+      contract.buyFlightInsurance(flight, time, payment);
+    });
+
+    $('#submit-payout').click(() => {
+      let flight = $('#flights-payout').val();
+      let time = $('#times-payout').val();
+      contract.pay(flight, time);
+    });
+
   });
 })();
 
@@ -33,33 +52,67 @@ import axios from "axios";
 /*                                     DOM MANIPULATION                                     */
 /********************************************************************************************/
 
-let flightTimesResponse;
+// Create dropdowns
+let flightsStatusDropdown = $('#flights-status');
+  flightsStatusDropdown.append('<option selected="true" disabled>Select a flight</option>');
+  flightsStatusDropdown.prop('selectedIndex', 0);
+let timesStatusDropdown = $('#times-status');
+  timesStatusDropdown.append('<option selected="true" disabled>Select a time</option>');
+  timesStatusDropdown.prop('selectedIndex', 0);
+let flightsPurchaseDropdown = $('#flights-purchase');
+  flightsPurchaseDropdown.append('<option selected="true" disabled>Select a flight</option>');
+  flightsPurchaseDropdown.prop('selectedIndex', 0);
+let timesPurchaseDropdown = $('#times-purchase');
+  timesPurchaseDropdown.append('<option selected="true" disabled>Select a time</option>');
+  timesPurchaseDropdown.prop('selectedIndex', 0);
+let flightsPayoutDropdown = $('#flights-payout');
+  flightsPayoutDropdown.append('<option selected="true" disabled>Select a flight</option>');
+  flightsPayoutDropdown.prop('selectedIndex', 0);
+let timesPayoutDropdown = $('#times-payout');
+  timesPayoutDropdown.append('<option selected="true" disabled>Select a time</option>');
+  timesPayoutDropdown.prop('selectedIndex', 0);
 
-function fetchFlightsAndTimes() {
-  axios.get('/api/flights').then((result) => {
-    flightTimesResponse = result.data;
-    flightTimesResponse.forEach((element) => {
-      flightsDropdown.append($('<option></option>').attr('value', element.flight).text(element.flight));
-    })
-  })
+// Populate dropdown options
+function populateFlights(data) {
+  flightsStatusDropdown.append($('<option></option>').attr('value', data.flight).text(data.flight));
+  flightsPurchaseDropdown.append($('<option></option>').attr('value', data.flight).text(data.flight));
+  flightsPayoutDropdown.append($('<option></option>').attr('value', data.flight).text(data.flight));
 }
 
-let flightsDropdown = $('#flights-dropdown');
-flightsDropdown.empty();
-flightsDropdown.append('<option selected="true" disabled>Select a flight</option>');
-flightsDropdown.prop('selectedIndex', 0);
-
-let timesDropdown = $('#times-dropdown');
-timesDropdown.append('<option selected="true" disabled>Select a time</option>');
-timesDropdown.prop('selectedIndex', 0);
-
-$('#flights-dropdown').change(function(){
-  timesDropdown.empty();
+// Add change event listeners
+$('#flights-status').change(function(){
+  timesStatusDropdown.empty();
   let times = flightTimesResponse.find(flightTimes => flightTimes.flight === $(this).val()).times;
   times.forEach((element) => {
-    timesDropdown.append($('<option></option>').attr('value', element).text(new Date(element * 1000))); 
+    timesStatusDropdown.append($('<option></option>').attr('value', element).text(new Date(element * 1000))); 
   });
 });
+$('#flights-purchase').change(function(){
+  timesPurchaseDropdown.empty();
+  let times = flightTimesResponse.find(flightTimes => flightTimes.flight === $(this).val()).times;
+  times.forEach((element) => {
+    timesPurchaseDropdown.append($('<option></option>').attr('value', element).text(new Date(element * 1000))); 
+  });
+});
+$('#flights-payout').change(function(){
+  timesPayoutDropdown.empty();
+  let times = flightTimesResponse.find(flightTimes => flightTimes.flight === $(this).val()).times;
+  times.forEach((element) => {
+    timesPayoutDropdown.append($('<option></option>').attr('value', element).text(new Date(element * 1000))); 
+  });
+});
+
+// Add conditional rendering
+$('#loading').hide();
+$('#oracle-response').hide();
+
+
+
+
+
+
+
+
 
 
 
